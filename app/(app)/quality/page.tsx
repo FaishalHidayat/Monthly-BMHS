@@ -36,7 +36,7 @@ function QualitySection({
       <SectionTitle title={title} desc={`Periode QA terbaru: ${cur.label}`} />
       <div className="grid gap-4 xl:grid-cols-5">
         <Card className="xl:col-span-2" title={`Score ${title.replace("Quality ", "")}`} subtitle={prev?.score != null ? `${signed((cur.score! - prev.score) * 100, 2)} poin vs periode QA sebelumnya` : undefined} source={source}>
-          <Bars data={blocks.map((b) => ({ name: b.label, value: b.score! }))} fmt="pct" height={260} name="Score" />
+          <Bars data={blocks.map((b) => ({ name: b.label.split(" - ").pop() ?? b.label, value: b.score! }))} fmt="pct" height={260} name="Score" />
         </Card>
         <div className="xl:col-span-3">
           <InsightPanel insight={insight} />
@@ -48,7 +48,7 @@ function QualitySection({
             <GroupBars
               horizontal
               data={cats}
-              series={hasPrevCats ? [{ key: "previous", label: prev!.label, color: "var(--s2)" }, { key: "current", label: cur.label }] : [{ key: "current", label: cur.label }]}
+              series={hasPrevCats ? [{ key: "previous", label: prev!.label, color: "var(--s2)" }, { key: "current", label: cur.label, color: "var(--s1)" }] : [{ key: "current", label: cur.label, color: "var(--s1)" }]}
               fmt="pct"
               labels
               labelWidth={200}

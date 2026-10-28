@@ -77,7 +77,7 @@ export default async function AppendixPage({ searchParams }: { searchParams: Sea
 
           <SectionTitle title="AHT Daily" />
           <Card source="call detail">
-            <Bars data={ib.daily.map((d) => ({ name: d.date.slice(8), value: d.ahtSec }))} fmt="dur" height={300} name="AHT" />
+            <Bars data={ib.daily.map((d) => ({ name: d.date.slice(8), value: d.ahtSec }))} fmt="dur" height={300} name="AHT" showLabels={false} />
           </Card>
           <div className="mt-4">
             <InsightPanel insight={insights.aht_daily} />

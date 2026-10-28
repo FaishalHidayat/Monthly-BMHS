@@ -267,7 +267,7 @@ export function UploadClient({ periods }: { periods: PeriodSummary[] }) {
         </Card>
       </div>
 
-      {detail && !creating && <QualityOverride detail={detail} onSaved={() => loadDetail(periodId)} />}
+      {detail && !creating && <QualityOverride key={`${detail.period.id}-${JSON.stringify(detail.period.metrics.quality ?? {})}`} detail={detail} onSaved={() => loadDetail(periodId)} />}
     </div>
   );
 }

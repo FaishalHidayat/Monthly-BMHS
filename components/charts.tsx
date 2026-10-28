@@ -97,6 +97,7 @@ export function Bars({
   showLabels?: boolean;
 }) {
   const fmt = FMT[fmtKey];
+  const axisFmt = FMT[fmtKey === "pct" ? "pct0" : fmtKey];
   const h = horizontal ? Math.max(height, data.length * 30 + 30) : height;
   return (
     <div style={{ height: h }} className="w-full">
@@ -105,13 +106,13 @@ export function Bars({
           <CartesianGrid stroke="var(--grid)" horizontal={!horizontal} vertical={!!horizontal} />
           {horizontal ? (
             <>
-              <XAxis type="number" {...axisProps} tickFormatter={(v) => fmt(v)} />
+              <XAxis type="number" {...axisProps} tickFormatter={(v) => axisFmt(v)} />
               <YAxis type="category" dataKey="name" width={labelWidth} {...axisProps} interval={0} tick={{ fill: "var(--ink-2)", fontSize: 11 }} />
             </>
           ) : (
             <>
               <XAxis dataKey="name" {...axisProps} interval={0} tick={{ fill: "var(--ink-2)", fontSize: 11 }} />
-              <YAxis {...axisProps} width={44} tickFormatter={(v) => fmt(v)} />
+              <YAxis {...axisProps} width={44} tickFormatter={(v) => axisFmt(v)} />
             </>
           )}
           <Tooltip cursor={{ fill: "var(--surface-2)" }} content={<TooltipBox fmt={fmt} />} />
@@ -151,6 +152,7 @@ export function GroupBars({
   domain?: [number | string, number | string];
 }) {
   const fmt = FMT[fmtKey];
+  const axisFmt = FMT[fmtKey === "pct" ? "pct0" : fmtKey];
   const h = horizontal ? Math.max(height, data.length * (stacked ? 30 : 22 * series.length + 10) + 50) : height;
   return (
     <div style={{ height: h }} className="w-full">
@@ -159,13 +161,13 @@ export function GroupBars({
           <CartesianGrid stroke="var(--grid)" horizontal={!horizontal} vertical={!!horizontal} />
           {horizontal ? (
             <>
-              <XAxis type="number" {...axisProps} tickFormatter={(v) => fmt(v)} domain={domain} />
+              <XAxis type="number" {...axisProps} tickFormatter={(v) => axisFmt(v)} domain={domain} />
               <YAxis type="category" dataKey={xKey} width={labelWidth} {...axisProps} interval={0} tick={{ fill: "var(--ink-2)", fontSize: 11 }} />
             </>
           ) : (
             <>
               <XAxis dataKey={xKey} {...axisProps} interval={0} tick={{ fill: "var(--ink-2)", fontSize: 11 }} />
-              <YAxis {...axisProps} width={48} tickFormatter={(v) => fmt(v)} domain={domain} />
+              <YAxis {...axisProps} width={48} tickFormatter={(v) => axisFmt(v)} domain={domain} />
             </>
           )}
           <Tooltip cursor={{ fill: "var(--surface-2)" }} content={<TooltipBox fmt={fmt} />} />
@@ -214,6 +216,7 @@ export function Lines({
   labels?: boolean;
 }) {
   const fmt = FMT[fmtKey];
+  const axisFmt = FMT[fmtKey === "pct" ? "pct0" : fmtKey];
   const xFmt = XFMT[xFmtKey];
   return (
     <div style={{ height }} className="w-full">
@@ -221,7 +224,7 @@ export function Lines({
         <LineChart data={data} margin={{ top: 20, right: 16, left: 0, bottom: 0 }}>
           <CartesianGrid stroke="var(--grid)" vertical={false} />
           <XAxis dataKey={xKey} {...axisProps} tickFormatter={xFmt} minTickGap={8} />
-          <YAxis {...axisProps} width={52} tickFormatter={(v) => fmt(v)} domain={domain} />
+          <YAxis {...axisProps} width={52} tickFormatter={(v) => axisFmt(v)} domain={domain} />
           <Tooltip cursor={{ stroke: "var(--ink-3)", strokeDasharray: "3 3" }} content={<TooltipBox fmt={fmt} labelFmt={xFmt} />} />
           {series.length > 1 && <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 12, color: "var(--ink-2)" }} />}
           {series.map((s, i) => (
@@ -257,6 +260,7 @@ export function Donut({
   center?: { value: string; label: string };
 }) {
   const fmt = FMT[fmtKey];
+  const axisFmt = FMT[fmtKey === "pct" ? "pct0" : fmtKey];
   const total = data.reduce((a, b) => a + b.value, 0) || 1;
   return (
     <div className="flex flex-col items-center gap-3 sm:flex-row">
