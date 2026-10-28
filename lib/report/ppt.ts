@@ -555,7 +555,7 @@ export async function buildPpt({ history, insights }: { history: Period[]; insig
     s.background = { color: C.white };
     s.addShape("rect", { x: 0, y: 0, w: 0.35, h: 7.5, fill: { color: C.green }, line: { type: "none" } });
     s.addImage({ path: asset("/brand/bunda-logo-large.png"), x: 0.9, y: 0.8, w: 4.4, h: 1.51 });
-    s.addImage({ path: asset("/brand/closing-person.png"), x: 7.6, y: 1.0, w: 4.8, h: 5.48 });
+    s.addImage({ path: asset("/brand/closing-person.png"), x: 6.2, y: 2.3, w: 6.6, h: 2.67 });
     s.addText([
       { text: "TERIMA KASIH", options: { fontSize: 40, bold: true, color: C.greenDark, breakLine: true } },
       { text: "dan", options: { fontSize: 22, color: C.ink2, breakLine: true } },
