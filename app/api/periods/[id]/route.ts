@@ -1,5 +1,5 @@
 import { apiUser, handle, HttpError } from "@/lib/server/auth";
-import { deletePeriod, getOverrides, getPeriod, setOverrides } from "@/lib/server/periods";
+import { deletePeriod, getAutoMetrics, getOverrides, getPeriod, setOverrides } from "@/lib/server/periods";
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -7,7 +7,7 @@ export const GET = handle(async (_req: Request, { params }: Ctx) => {
   await apiUser();
   const p = await getPeriod(Number((await params).id));
   if (!p) throw new HttpError(404, "Periode tidak ditemukan");
-  return Response.json({ period: p, overrides: await getOverrides(p.id) });
+  return Response.json({ period: p, overrides: await getOverrides(p.id), auto: await getAutoMetrics(p.id) });
 });
 
 // Koreksi manual (mis. angka quality) yang menimpa hasil hitung otomatis.

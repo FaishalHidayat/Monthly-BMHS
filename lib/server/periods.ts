@@ -123,6 +123,12 @@ export async function getOverrides(periodId: number): Promise<Partial<PeriodMetr
   return r?.overrides ?? {};
 }
 
+/** Metrics hasil hitung otomatis (tanpa koreksi manual). */
+export async function getAutoMetrics(periodId: number): Promise<PeriodMetrics> {
+  const [r] = await sql`select metrics from periods where id = ${periodId}`;
+  return r?.metrics ?? {};
+}
+
 export async function deletePeriod(periodId: number) {
   await sql`delete from periods where id = ${periodId}`;
 }

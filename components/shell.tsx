@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import {
   BarChart3,
   CalendarRange,
+  PencilLine,
   FileDown,
   Headphones,
   KeyRound,
@@ -45,6 +46,7 @@ const NAV = [
 ];
 const ADMIN_NAV = [
   { href: "/upload", label: "Upload Data", icon: Upload },
+  { href: "/quality-input", label: "Input Quality", icon: PencilLine },
   { href: "/users", label: "Pengguna", icon: Users },
   { href: "/settings", label: "Pengaturan", icon: Settings },
 ];

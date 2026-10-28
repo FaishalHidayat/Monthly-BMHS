@@ -1,12 +1,13 @@
 "use client";
 
 import clsx from "clsx";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { CheckCircle2, CircleDashed, FileSpreadsheet, Loader2, Plus, Sparkles, Trash2, UploadCloud, XCircle } from "lucide-react";
 import { Card, SectionTitle } from "@/components/ui";
-import { DATASETS, type DatasetKey, type Period, type QualityBlock } from "@/lib/types";
-import { defaultRange, fmtNum, fmtPct } from "@/lib/format";
+import { DATASETS, type DatasetKey, type Period } from "@/lib/types";
+import { defaultRange, fmtNum } from "@/lib/format";
 import type { PeriodSummary } from "@/lib/server/periods";
 
 interface Item {
@@ -267,64 +268,13 @@ export function UploadClient({ periods }: { periods: PeriodSummary[] }) {
         </Card>
       </div>
 
-      {detail && !creating && <QualityOverride key={`${detail.period.id}-${JSON.stringify(detail.period.metrics.quality ?? {})}`} detail={detail} onSaved={() => loadDetail(periodId)} />}
+      {detail && !creating && (
+        <Card className="mt-4" title="Input Manual Quality Score" subtitle="Skor total, per parameter, dan per agent untuk Inbound, Outbound, dan Chat bisa diisi manual.">
+          <Link href={`/quality-input?p=${detail.period.id}`} className="inline-flex items-center gap-2 rounded-xl bg-brand px-4 py-2 text-sm font-semibold text-white">
+            Buka Input Quality
+          </Link>
+        </Card>
+      )}
     </div>
-  );
-}
-
-function QualityOverride({ detail, onSaved }: { detail: { period: Period; overrides: Record<string, unknown> }; onSaved: () => void }) {
-  const q = detail.period.metrics.quality ?? {};
-  const kinds = [
-    ["inbound", "Inbound"],
-    ["outbound", "Outbound"],
-    ["chat", "Chat"],
-  ] as const;
-  const [vals, setVals] = useState(() =>
-    Object.fromEntries(kinds.map(([k]) => [k, { score: q[k]?.score != null ? (q[k]!.score! * 100).toFixed(2) : "", label: q[k]?.label ?? "" }])),
-  );
-  const [saved, setSaved] = useState(false);
-  return (
-    <Card className="mt-4" title="Koreksi Manual Quality Score" subtitle="Opsional — menimpa angka hasil hitung otomatis dari file SCORE (mis. bila memakai rumus QA berbeda).">
-      <div className="grid gap-3 md:grid-cols-3">
-        {kinds.map(([k, name]) => (
-          <div key={k} className="rounded-xl bg-surface-2 p-3 ring-1 ring-line">
-            <div className="mb-2 text-sm font-semibold">
-              {name} <span className="font-normal text-ink-3">· otomatis {fmtPct(q[k]?.score)}</span>
-            </div>
-            <label className="block text-xs text-ink-3">
-              Score (%)
-              <input value={vals[k].score} onChange={(e) => setVals({ ...vals, [k]: { ...vals[k], score: e.target.value } })} className="mt-1 w-full rounded-lg border border-line bg-surface px-2.5 py-1.5 text-sm text-ink" />
-            </label>
-            <label className="mt-2 block text-xs text-ink-3">
-              Label periode QA
-              <input value={vals[k].label} onChange={(e) => setVals({ ...vals, [k]: { ...vals[k], label: e.target.value } })} className="mt-1 w-full rounded-lg border border-line bg-surface px-2.5 py-1.5 text-sm text-ink" />
-            </label>
-          </div>
-        ))}
-      </div>
-      <div className="mt-3 flex items-center justify-end gap-3">
-        {saved && <span className="text-sm text-brand">Tersimpan</span>}
-        <button
-          onClick={async () => {
-            const quality: Record<string, QualityBlock> = {};
-            for (const [k] of kinds) {
-              const base = q[k] ?? { label: "", score: null, categories: [], agents: [] };
-              const s = parseFloat(String(vals[k].score).replace(",", "."));
-              quality[k] = { ...base, label: vals[k].label || base.label, score: Number.isFinite(s) ? s / 100 : base.score };
-            }
-            await fetch(`/api/periods/${detail.period.id}`, {
-              method: "PATCH",
-              headers: { "content-type": "application/json" },
-              body: JSON.stringify({ overrides: { ...detail.overrides, quality } }),
-            });
-            setSaved(true);
-            onSaved();
-          }}
-          className="rounded-xl bg-brand px-4 py-2 text-sm font-semibold text-white"
-        >
-          Simpan koreksi
-        </button>
-      </div>
-    </Card>
   );
 }
