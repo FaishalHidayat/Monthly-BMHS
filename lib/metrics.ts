@@ -362,38 +362,61 @@ function appointmentDate(comment: string): string | null {
   return null;
 }
 
+/** 14 kondisi yang boleh ditransfer/eskalasi ke Admission (acuan SOP). */
+export const ESCALATION_TOPICS = [
+  "Pendaftaran Hari-H",
+  "Dokter Khusus / Slot Terbatas",
+  "Administrasi Rawat Inap",
+  "Ubah Kelas Kamar",
+  "Ketersediaan Kamar",
+  "Ubah Appointment Khusus",
+  "Status Adm. Pasien",
+  "Deposit / Pembayaran",
+  "Kelengkapan Dokumen",
+  "Wewenang Admission",
+  "Asuransi / Billing",
+  "IGD / Emergency",
+  "Ambulance",
+  "BPJS (Cabang Tanpa PIC)",
+] as const;
+
+// Urutan cek = prioritas (yang paling spesifik lebih dulu).
 const TOPIC_RULES: [string, RegExp][] = [
-  ["IGD / Emergency", /\bigd\b|emergency|darurat/],
+  ["IGD / Emergency", /\bigd\b|emergency|darurat|gawat/],
   ["Ambulance", /ambulan/],
-  ["MCU (Medical Check Up)", /\bmcu\b|medical check/],
-  ["Vaksinasi / Imunisasi", /vaksin|imunisasi/],
-  ["Informasi Obat / Resep", /\bobat\b|resep|farmasi/],
-  ["Deposit / Pembayaran", /deposit|pembayaran|tagihan|refund/],
-  ["Asuransi / Billing", /klaim|billing|plafon|penutupan asuransi|\blog\b|guarantee/],
-  ["Ketersediaan Kamar", /kamar|rawat inap|\branap\b|\bbed\b|nicu|picu/],
+  ["Ubah Kelas Kamar", /(naik|turun|ubah|pindah|ganti|upgrade|downgrade)\s*(ke\s*)?kelas/],
+  ["Administrasi Rawat Inap", /(administrasi|admisi|pendaftaran|daftar|surat|pulang|keluar).{0,30}(rawat inap|ranap)|(rawat inap|ranap).{0,30}(administrasi|pulang|keluar|surat)/],
+  ["Ketersediaan Kamar", /kamar|\bbed\b|tempat tidur|rawat inap|\branap\b|nicu|picu|\bhcu\b|\bicu\b|perina/],
+  ["Deposit / Pembayaran", /deposit|pembayaran|\bbayar|tagihan|refund|\bdp\b|uang muka|transfer dana/],
+  ["Asuransi / Billing", /klaim|billing|plafon|penutupan asuransi|asuransi(nya)? (belum )?(di)?tutup|\blog\b|guarantee|garansi|jaminan asuransi (tidak|belum)|limit asuransi/],
   ["BPJS (Cabang Tanpa PIC)", /bpjs/],
-  ["Kelengkapan Dokumen", /dokumen|rujukan|surat keterangan|resume medis/],
-  ["Status Administrasi Pasien", /administrasi|hasil lab|hasil pemeriksaan|rekam medis|status administrasi|surat sakit|sudah pulang|pulang/],
-  ["Penunjang (USG/Radiologi/Lab)", /\busg\b|radiologi|rontgen|ct scan|\bmri\b|laborat/],
-  ["Informasi Prosedur & Biaya Tindakan", /biaya|harga|tarif|prosedur|tindakan|operasi|persalinan|paket|sirkumsisi|khitan/],
-  ["Ubah Appointment", /reschedule|ubah jadwal|ganti jadwal|ubah appointment|pembatalan|\bcancel\b|\bbatal/],
-  ["Kontrol / Follow Up Pasien", /kontrol|follow up|lanjutan/],
-  ["Dokter Khusus / Slot Terbatas", /dokter khusus|slot|kuota|penuh|subsp|sp\.?a\s*\(k\)/],
+  ["Kelengkapan Dokumen", /dokumen|rujukan|surat|resume|hasil (lab|pemeriksaan|usg|rontgen|radiologi)|kwitansi|sertifikat|berkas|fotokopi/],
+  ["Status Adm. Pasien", /status (pasien|administrasi)|administrasi pasien|data pasien|(ubah|ganti|perubahan|update|koreksi) data|nomor rm|no\.? ?rm|rekam medis|nomor rekam|registrasi ulang/],
+  ["Ubah Appointment Khusus", /reschedule|re-?jadwal|ubah jadwal|ganti jadwal|ubah (appointment|appt|janji|perjanjian)|pembatalan|\bcancel\b|\bbatal|mundur(kan)?|majukan|pindah jadwal|ganti tanggal|ubah tanggal/],
+  ["Wewenang Admission", /wewenang|kewenangan|(pihak|bagian|tim) (admission|admisi)|konfirmasi (ke )?admisi/],
 ];
 
+/** Dokter khusus: subspesialis "(K)", SUBSP, Prof, atau disebut eksplisit. */
+function isDokterKhusus(comment: string) {
+  const c = comment.toLowerCase();
+  if (/dokter khusus|slot|kuota|antrian penuh|jadwal penuh|kuota penuh/.test(c)) return true;
+  const doc = /dokter\s*(yang dituju|tujuan)?\s*:?\s*([^\n]{0,90})/i.exec(comment)?.[2] ?? "";
+  return /\(k\)|subsp|\bprof\b/i.test(doc);
+}
+
 export function escalationTopic(r: EscalationRow): string {
-  const c = r.comment.toLowerCase();
   // Ambil hanya isi "Keluhan/Kebutuhan" (berhenti di label field berikutnya pada form komentar).
   const raw = /keluhan\s*\/?\s*kebutuhan\s*:?([\s\S]{0,500})/i.exec(r.comment)?.[1] ?? r.comment;
   const need = raw
-    .split(/mohon menghubungi|\bpoli\s*[:]|\bpoli\s+(?=[a-z])|\bdokter\s*:|status pasien|keterangan\s*:?|jaminan\s*:/i)[0]
+    .split(/mohon menghubungi|\bpoli\s*[:]|\bpoli\s+(?=[a-z])|\bdokter\s*:|status pasien\s*:|keterangan\s*:?|jaminan\s*:/i)[0]
     .toLowerCase();
-  for (const [topic, re] of TOPIC_RULES.slice(0, 9)) if (re.test(need)) return topic;
+  for (const [topic, re] of TOPIC_RULES) if (re.test(need)) return topic;
+  if (isDokterKhusus(r.comment)) return "Dokter Khusus / Slot Terbatas";
+  // Permintaan pendaftaran/konsultasi yang dieskalasi = pendaftaran hari-H.
   const appt = appointmentDate(r.comment);
   if (appt && r.date && appt === r.date.slice(0, 10)) return "Pendaftaran Hari-H";
-  if (/hari ini|hari-h|hari h\b/.test(need)) return "Pendaftaran Hari-H";
-  for (const [topic, re] of TOPIC_RULES.slice(9)) if (re.test(need)) return topic;
-  if (/sakit|demam|batuk|pilek|nyeri|keluhan|konsultasi|diare|muntah|ruam|gatal/.test(need)) return "Pendaftaran Konsultasi Pasien Sakit";
+  if (/hari ini|hari-h|hari h\b|daftar|pendaftaran|appointment|appt|janji temu|konsultasi|kontrol|periksa|berobat|vaksin|imunisasi|sakit|demam|batuk|pilek|nyeri|keluhan|diare|muntah/.test(need + " " + r.comment.toLowerCase()))
+    return "Pendaftaran Hari-H";
   return "Lainnya";
 }
 

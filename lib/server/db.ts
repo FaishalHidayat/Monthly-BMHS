@@ -1,8 +1,9 @@
 import "server-only";
 import postgres from "postgres";
 
-// Koneksi PostgreSQL standar. Untuk Supabase pakai connection string pooler
-// (port 6543); untuk PostgreSQL lokal cukup ganti DATABASE_URL.
+// Koneksi PostgreSQL standar. Untuk Supabase pakai pooler mode session
+// (port 5432) — mode transaction (6543) bisa macet saat beberapa query berjalan
+// bersamaan. Untuk PostgreSQL lokal cukup ganti DATABASE_URL.
 declare global {
   var __bmhsSql: postgres.Sql | undefined;
 }
@@ -13,9 +14,11 @@ function create() {
   const local = /localhost|127\.0\.0\.1/.test(url);
   return postgres(url, {
     ssl: local || process.env.DATABASE_SSL === "false" ? false : "require",
-    prepare: false, // wajib untuk transaction pooler
-    max: 3,
-    idle_timeout: 20,
+    prepare: false,
+    max: 2,
+    idle_timeout: 15,
+    max_lifetime: 60 * 5,
+    connect_timeout: 10,
     connection: { search_path: "bmhs,public" },
     types: { bigint: postgres.BigInt },
   });
